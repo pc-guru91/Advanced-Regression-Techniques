@@ -42,8 +42,9 @@ We performed post hoc analysis such as ANOVA factor and TukeyHSD to validate the
   Quality = c('Ex'=5, 'Gd'=4, 'TA'=3, 'Fa'=2, 'Po'=1, 'None'=0)  
   Ames$FireplaceQu = as.integer(revalue(Ames$FireplaceQu, Quality))
   ```
-  ### 2.3 Outliers
-  
+  ### 2.3 Removing Outliers
+
+
   
   
   
@@ -75,6 +76,7 @@ We performed post hoc analysis such as ANOVA factor and TukeyHSD to validate the
 ## 6. Evaluation
   ### 6.1 Choose the Best Model
   ### 6.2 Submit Your Work
+  Good luck on your next data science competition! :v:
 
 
 
