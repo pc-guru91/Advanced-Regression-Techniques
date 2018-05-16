@@ -154,7 +154,7 @@ Ames$GarageFinish = as.integer(revalue(Ames$GarageFinish, Garage))
 ...
 (Note: Not all features are explained, but recognize that this analysis will be performed consistently to the features and determine which can be transformed with label encoding.
 ```
-#### After testing all categorical features, we find that the following features contain ordinality:
+#### After testing all categorical features, we found that following features contain ordinality:
 | Categorical Features|
 | --------|
 | Alley  |
@@ -168,7 +168,7 @@ Ames$GarageFinish = as.integer(revalue(Ames$GarageFinish, Garage))
 
  ### 2.4 Factorizing numeric variables
  #### MSSubClass
- The MSSubClass should be factorized. Otherwise, the integers can interfere with machine learning algorithms to recognize that MSSubClass = 190 to have the highest weight in predicting for SalePrice, which can be misleading and produce wrong results. 
+ The MSSubClass should be factorized. Otherwise, MSSubClass groups can mislead MSSubClass = 190 to have the highest weight and MSSubClass = 20 to have the lowest weight in predicting for the SalePrice. 
  ```
     MSSubClass median count
         <int>  <dbl>  <int>
@@ -192,7 +192,7 @@ Ames$MSSubClass=as.factor(Ames$MSSubClass)
 ```
 
  #### MoSold & YrSold
- Both features are proned to seasonality with a hint of cyclicality and SalePrice varies by the months and years in which homes are sold. 
+ Both features are proned to seasonality with a hint of cyclicality. The SalePrice varies by different months and years in which homes are sold. 
  
 ![mo yr sold](https://user-images.githubusercontent.com/38479244/40102807-51fe7fde-58a0-11e8-9de3-516723372641.png)
 
@@ -228,12 +228,13 @@ Ames$SaleCondition = as.factor(Ames$SaleCondition)
 ![randomforest importance](https://user-images.githubusercontent.com/38479244/40110140-162616e8-58b4-11e8-9ab6-f5d0c18878db.png)
 
   ### 3.3 Key Features
-  Based on correlation matrix and random forest variance importance, we can narrow down all 79 variables to 4 main variables that affect   the SalePrice the most:
+  Based on correlation matrix and random forest variance importance, we can narrow down all 79 variables to 5 main variables that affect   the SalePrice the most:
    
    1. OverallQual
    2. GrLivArea
    3. Neighborhood
    4. YearBuilt
+   5. MSSubClass
    
   #### OverallQual
   Overall quality of a house has a scale ranging from 1 (poor) to 10 (very excellent). Based on the observation, there's a significant difference between each group of the feature in relation to SalePrice. 
@@ -241,12 +242,12 @@ Ames$SaleCondition = as.factor(Ames$SaleCondition)
   ![overallqual](https://user-images.githubusercontent.com/38479244/40111812-dbe39c8a-58b8-11e8-85ad-82443885a326.png)
  
  #### GrLivArea.
-  There are some outliers present. We will address them later. For now, we will identify that positive relationship exists between GrLivArea and SalePrice. 
+  There are some outliers present. We will address them later. For now, we will identify that positive relationship exists between GrLivArea and SalePrice. Also, notice that GrLivArea = 1stFlrSF + 2ndFlrSF + LowQualFinSF. 
   
   ![grlivarea](https://user-images.githubusercontent.com/38479244/40111819-e1c9efd2-58b8-11e8-93b4-d58eb031a81d.png)
 
 #### YearBuilt
-  The growing trends across the timeline is evident. However, cyclicality is present, meaning SalePrice is affected by business cycles and economic upturns and downturns, which are volatile and extremely difficult to predict. In this case, it seems for YearBuilt to show a more defined cyclical trend than that of YearRemodel.
+  The growing trends across the timeline is evident. However, cyclicality is found meaning SalePrice is affected by business cycles and economic upturns and downturns, which are volatile and extremely difficult to predict. In this case, YearBuilt shows a more defined cyclical trend than that of YearRemodel.
   
   ![yearbulit yearremod](https://user-images.githubusercontent.com/38479244/40111833-e8d73df2-58b8-11e8-9798-55642f8b5b1e.png)
  
@@ -255,8 +256,11 @@ Ames$SaleCondition = as.factor(Ames$SaleCondition)
   
   ![neighborhood](https://user-images.githubusercontent.com/38479244/40111838-ee70a3ac-58b8-11e8-8b11-274cb7c31e2d.png)
   
+ #### MSSubClass
+ 
+  
 ## 4. Feature Engineering
-This section is crucial to machine learning. Now, we will figure out how we can discover stronger variables that would explain more information about the dataset than the ones we already have. First, we will try to build new features 
+This section is critical in optimizing predictive models. Now, we will figure out how we can discover stronger variables that would explain more information about the dataset than the ones we already have. 
   
 ## 5. Data Pre-Processing
   ### 5.1 Removing highly correlated variables
