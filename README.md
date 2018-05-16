@@ -22,7 +22,7 @@ The dataset (both training and testing) is provided by [Kaggle](https://www.kagg
 - Roof variables
 - Utilities variables
 
-For additional details, click the [link](https://ww2.amstat.org/publications/jse/v19n3/decock/DataDocumentation.txt).
+**For additional details, click the [link](https://ww2.amstat.org/publications/jse/v19n3/decock/DataDocumentation.txt).**
 
 ### 1.2 Load the dataset
 Since both test and train sets contain missing values, let's combine them into a single data frame called Ames.
@@ -126,18 +126,6 @@ Ames$Electrical[1380] = names(sort(-table(Ames$Electrical[Ames$Heating %in% 'Gas
   (Note: Repeat this process for all other 9 features w/quality levels)
   ```
   ### 2.3 Encoding categorical variables
-  #### The following features contain ordinality:
-| Categorical Features|
-| --------|
-| Alley  |
-|BldgType|
-|CentralAir|
-|GarageFinish|
-|MasVnrType|
-|MSZoning|
-|PavedDrive|
-|Street|
-
 #### Hypothesis Testing
 We will perform post hoc analysis using both ANOVA factor and TukeyHSD to validate the ordinality of features in question. To give a couple of examples of how this works, refer to the descriptions below:
  ```
@@ -160,15 +148,27 @@ Notice that the adjusted p-value is 0, indicating that significant means exist b
 ```
 Alley = c('None'=0, 'Grvl'=1, 'Pave'=2)
 Ames$Alley = as.integer(revalue(Ames$Alley, Alley)) 
------------------------------------------------------
+
 Garage = c('Fin'=3, 'RFn'=2, 'Unf'=1, 'None'=0)  
 Ames$GarageFinish = as.integer(revalue(Ames$GarageFinish, Garage)) 
 ...
 (Note: Not all features are explained, but recognize that this analysis will be performed consistently to the features and determine which can be transformed with label encoding.
 ```
+#### After testing all categorical features, we find that the following features contain ordinality:
+| Categorical Features|
+| --------|
+| Alley  |
+|BldgType|
+|CentralAir|
+|GarageFinish|
+|MasVnrType|
+|MSZoning|
+|PavedDrive|
+|Street|
+
  ### 2.4 Factorizing numeric variables
  #### MSSubClass
- The MSSubClass should be factorized. Otherwise, the integers can interfere with machine learning algorithms to recognize that MSSubClass = 190 to have the highest weight in predicting for SalePrice, which can mislead it to produce wrong results. 
+ The MSSubClass should be factorized. Otherwise, the integers can interfere with machine learning algorithms to recognize that MSSubClass = 190 to have the highest weight in predicting for SalePrice, which can be misleading and produce wrong results. 
  ```
     MSSubClass median count
         <int>  <dbl>  <int>
@@ -192,8 +192,10 @@ Ames$MSSubClass=as.factor(Ames$MSSubClass)
 ```
 
  #### MoSold & YrSold
- Both features are prone to seasonality with a hint of cyclicality and SalePrice varies by the months and years in which homes are sold. 
+ Both features are proned to seasonality with a hint of cyclicality and SalePrice varies by the months and years in which homes are sold. 
+ 
 ![mo yr sold](https://user-images.githubusercontent.com/38479244/40102807-51fe7fde-58a0-11e8-9de3-516723372641.png)
+
 ```
 Ames$MoSold = as.factor(Ames$MoSold)
 Ames$YrSold = as.factor(Ames$YrSold)
@@ -216,31 +218,63 @@ Ames$SaleCondition = as.factor(Ames$SaleCondition)
 ```
 
 ## 3. Data Exploration
-  ### 3.1 Key Features
+   
+  ### 3.1 Correlation matrix of numerical variables
   
-  ### 3.2 Correlation Matrix
-  ### 3.3 Random Forest Feature Importance
-  ### 3.4 Removing Highly Correlated Variables
+  ![correlation matrix](https://user-images.githubusercontent.com/38479244/40106818-a1b5d5d0-58ab-11e8-872b-c69eab93c72e.png)
+  
+  ### 3.2 Random Forest variance importance
+  
+![randomforest importance](https://user-images.githubusercontent.com/38479244/40110140-162616e8-58b4-11e8-9ab6-f5d0c18878db.png)
+
+  ### 3.3 Key Features
+  Based on correlation matrix and random forest variance importance, we can narrow down all 79 variables to 4 main variables that affect   the SalePrice the most:
+   
+   1. OverallQual
+   2. GrLivArea
+   3. Neighborhood
+   4. YearBuilt
+   
+  #### OverallQual
+  Overall quality of a house has a scale ranging from 1 (poor) to 10 (very excellent). Based on the observation, there's a significant difference between each group of the feature in relation to SalePrice. 
+  
+  ![overallqual](https://user-images.githubusercontent.com/38479244/40111812-dbe39c8a-58b8-11e8-85ad-82443885a326.png)
+ 
+ #### GrLivArea.
+  There are some outliers present. We will address them later. For now, we will identify that positive relationship exists between GrLivArea and SalePrice. 
+  
+  ![grlivarea](https://user-images.githubusercontent.com/38479244/40111819-e1c9efd2-58b8-11e8-93b4-d58eb031a81d.png)
+
+#### YearBuilt
+  The growing trends across the timeline is evident. However, cyclicality is present, meaning SalePrice is affected by business cycles and economic upturns and downturns, which are volatile and extremely difficult to predict. In this case, it seems for YearBuilt to show a more defined cyclical trend than that of YearRemodel.
+  
+  ![yearbulit yearremod](https://user-images.githubusercontent.com/38479244/40111833-e8d73df2-58b8-11e8-9798-55642f8b5b1e.png)
+ 
+ #### Neighborhood
+  Each neighborhood group is not evenly distributed, for example, "Blueste" and "NPkVill" have less than 10 observations in the training dataset. For simplicity, we will proceed assuming that these two neighborhoods represent the "true" value of the SalePrice. Depending on which neighborhood a house is located in, the SalePrice can differ approximately from $245,000 to $25,000. Possibly, neighborhood groups can be binned in relation to the magnitude of SalePrice. 
+  
+  ![neighborhood](https://user-images.githubusercontent.com/38479244/40111838-ee70a3ac-58b8-11e8-8b11-274cb7c31e2d.png)
   
 ## 4. Feature Engineering
-  This section is crucial to machine learning. Now, we will figure out how we can discover stronger variables that would explain a lot more about the dataset than the ones we already have. 
+This section is crucial to machine learning. Now, we will figure out how we can discover stronger variables that would explain more information about the dataset than the ones we already have. First, we will try to build new features 
   
 ## 5. Data Pre-Processing
-  ### 5.1 Removing outliers
-  ### 5.2 Normalize
-  ### 5.3 Standardize
-  ### 5.4 Principal component analysis
-  ### 5.5 One-hot encoding
-  ### 5.6 Dropping dummy variables w/zero variance
-  ### 5.7 Normalizing the target variable
+  ### 5.1 Removing highly correlated variables
+  ### 5.2 Removing outliers
+  ### 5.3 Skewness and kurtosis of predictors
+  ### 5.4 Standardize
+  ### 5.5 Principal component analysis
+  ### 5.6 One-hot encoding
+  ### 5.7 Dropping dummy variables w/zero variance
+  ### 5.8 Normalizing the target variable
  
 ## 6. Modeling
   ### 6.1 Lasso regression 
   ### 6.2 Ridge regression
   ### 6.3 Elastic net
   ### 6.4 XGBoost
-  ### 6.5 Simple Average
-  ### 6.6 Weighted Average
+  ### 6.5 Simple average
+  ### 6.6 Weighted average
   ### 6.7 Ensemble
   ### 6.8 Stacking
 
