@@ -144,7 +144,7 @@ RFn-Fin -38370.55  -49852.72 -26888.38     0
 Unf-Fin -98283.00 -108948.85 -87617.14     0
 Unf-RFn -59912.45  -69985.40 -49839.49     0
  ```
-Notice that the adjusted p-value is 0, indicating that significant means exist between different groups of a feature. Therefore, we will acknowledge that ordinality exists and assign label encoding. 
+Notice that the adjusted p-value is 0 indicating that significant means exist between different groups of a feature. Therefore, we will acknowledge that ordinality exists and assign label encoding. 
 ```
 Alley = c('None'=0, 'Grvl'=1, 'Pave'=2)
 Ames$Alley = as.integer(revalue(Ames$Alley, Alley)) 
@@ -201,7 +201,7 @@ Ames$MoSold = as.factor(Ames$MoSold)
 Ames$YrSold = as.factor(Ames$YrSold)
 ```  
 ### 2.5 Factorizing the rest of categorical variables
-Now that we imputed all missing values, we will begin to factorize all of the rest of categorical variables. Here's a list:
+Now that we've imputed all missing values, we will begin to factorize all of the rest of categorical variables. Here's a list:
 ```
 Ames$MiscFeature = as.factor(Ames$MiscFeature)        |     Ames$Functional = as.factor(Ames$Functional)
 Ames$Fence = as.factor(Ames$Fence)                    |     Ames$Electrical = as.factor(Ames$Electrical)
@@ -242,29 +242,102 @@ Ames$SaleCondition = as.factor(Ames$SaleCondition)
   ![overallqual](https://user-images.githubusercontent.com/38479244/40111812-dbe39c8a-58b8-11e8-85ad-82443885a326.png)
  
  #### GrLivArea.
-  There are some outliers present. We will address them later. For now, we will identify that positive relationship exists between GrLivArea and SalePrice. Also, notice that GrLivArea = 1stFlrSF + 2ndFlrSF + LowQualFinSF. 
+  There are some outliers present. We will address them later. For now, we will identify that positive relationship exists between GrLivArea and SalePrice. 
   
-  ![grlivarea](https://user-images.githubusercontent.com/38479244/40111819-e1c9efd2-58b8-11e8-93b4-d58eb031a81d.png)
+  ![final grlivarea outliers](https://user-images.githubusercontent.com/38479244/40148248-eb20b566-5921-11e8-9a2a-8f868220b0eb.png)
 
 #### YearBuilt
-  The growing trends across the timeline is evident. However, cyclicality is found meaning SalePrice is affected by business cycles and economic upturns and downturns, which are volatile and extremely difficult to predict. In this case, YearBuilt shows a more defined cyclical trend than that of YearRemodel.
+  The growing trends across the timeline is evident. However, cyclicality is found meaning SalePrice is affected by business cycles and economic upturns and downturns, which are volatile and extremely difficult to predict. In this case, YearBuilt shows a more defined cyclical trend than that of YearRemodel and GarageYrBlt.
   
-  ![yearbulit yearremod](https://user-images.githubusercontent.com/38479244/40111833-e8d73df2-58b8-11e8-9798-55642f8b5b1e.png)
- 
+![final time series](https://user-images.githubusercontent.com/38479244/40148152-72a36598-5921-11e8-882f-ccb056a7d6d0.png)
+
  #### Neighborhood
   Each neighborhood group is not evenly distributed, for example, "Blueste" and "NPkVill" have less than 10 observations in the training dataset. For simplicity, we will proceed assuming that these two neighborhoods represent the "true" value of the SalePrice. Depending on which neighborhood a house is located in, the SalePrice can differ approximately from $245,000 to $25,000. Possibly, neighborhood groups can be binned in relation to the magnitude of SalePrice. 
   
   ![neighborhood](https://user-images.githubusercontent.com/38479244/40111838-ee70a3ac-58b8-11e8-8b11-274cb7c31e2d.png)
   
  #### MSSubClass
- 
+  The boxplot chart is arranged in ascending order in terms of median SalePrice. This emphasizes homes that were built 1946 & newer relatively have high median Saleprice. Also, the outliers are labeled as red colored points and extreme ones are specificlally labeled with the rowname of the dataset. 
+  
+  ![mssubclass](https://user-images.githubusercontent.com/38479244/40147772-e6d969d2-591f-11e8-8a3d-3c1106353ef1.png)
+  
+       - 020	1-STORY 1946 & NEWER ALL STYLES       
+       - 030	1-STORY 1945 & OLDER
+       - 040	1-STORY W/FINISHED ATTIC ALL AGES
+       - 045	1-1/2 STORY - UNFINISHED ALL AGES
+       - 050	1-1/2 STORY FINISHED ALL AGES
+       - 060	2-STORY 1946 & NEWER
+       - 070	2-STORY 1945 & OLDER
+       - 075	2-1/2 STORY ALL AGES
+       - 080	SPLIT OR MULTI-LEVEL
+       - 085	SPLIT FOYER
+       - 090	DUPLEX - ALL STYLES AND AGES
+       - 120	1-STORY PUD (Planned Unit Development) - 1946 & NEWER
+       - 150	1-1/2 STORY PUD - ALL AGES
+       - 160	2-STORY PUD - 1946 & NEWER
+       - 180	PUD - MULTILEVEL - INCL SPLIT LEV/FOYER
+       - 190	2 FAMILY CONVERSION - ALL STYLES AND AGES
   
 ## 4. Feature Engineering
-This section is critical in optimizing predictive models. Now, we will figure out how we can discover stronger variables that would explain more information about the dataset than the ones we already have. 
-  
+This section is critical in optimizing predictive models. We will create stronger input variables that would explain more information about the dataset than the ones we already have. In order to do this, the user is required to have domain knowledge.
+
+ ### 4.1 Feature engineering on numeric data
+So far, we covered that OverallQual, GrLivArea, and YearBuilt have the one of the highest correlations with SalePrice. Since both living space and quality of a house are important we will look more closely on these components in order to create a new feature that would explain more about the data. 
+ ```
+# TotalBsmtSF = BsmtFinSF + BsmtUnfSF
+# GrLivArea   = 1stFlrSF + 2ndFlrSF + LowQualFinSF 
+# TotalArea = TotalBsmtSF + GrLivArea
+Ames = Ames %>% mutate(TotalArea = TotalBsmtSF+GrLivArea)  
+Ames$TotalArea = as.integer(Ames$TotalArea)  
+
+#Total Outdoor Space
+Ames = Ames %>% mutate(TotalOutdoorSF = OpenPorchSF+EnclosedPorch+X3SsnPorch+ScreenPorch)  
+Ames$TotalOutdoorSF = as.integer(Ames$TotalOutdoorSF) 
+
+#Total bathrooms in the house
+Ames = Ames %>% mutate(TotalBaths = BsmtFullBath + BsmtHalfBath*(0.5) + FullBath + HalfBath*(0.5))  
+Ames$TotalBaths = as.integer(Ames$TotalBaths) 
+```
+# 
+
+![house new](https://user-images.githubusercontent.com/38479244/40149272-a4f0a10e-5927-11e8-91d6-87e6da1209cf.png)
+
+```
+#Is it a new house?
+Ames$HouseNew = ifelse(Ames$YrSold == Ames$YearBuilt, 1, 0)
+Ames$HouseNew = as.integer(Ames$HouseNew)
+```
+
+![remodelled](https://user-images.githubusercontent.com/38479244/40149274-a6447120-5927-11e8-9adc-a3ba7928c30c.png)
+
+```
+#Is it remodelled?
+Ames$Remodelled = ifelse(Ames$YearRemodAdd != Ames$YearBuilt, 0, 1)
+Ames$Remodelled = as.integer(Ames$Remodelled)
+ ```
+
+ ### 4.2 Feature engineering on categoric data
+ We can try binning approach with Neighborhood and MSSubClass by subdividing them into equal intervals of SalePrice. 
+ ```
+ #Binning a Neighborhood
+ nbrh.map <- c('MeadowV' = 0, 'IDOTRR' = 1, 'BrDale' = 1, 'OldTown' = 1, 'Edwards' = 1,   
+              'BrkSide' = 1, 'Sawyer' =2, 'Blueste' = 2, 'SWISU' = 2, 'NAmes' = 2, 'NPkVill' = 2, 'Mitchel' = 2,  
+              'SawyerW' = 3, 'Gilbert' = 3, 'NWAmes' = 3, 'Blmngtn' = 3, 'CollgCr' = 3, 'ClearCr' = 3,   
+              'Crawfor' = 3, 'Veenker' = 4, 'Somerst' = 4, 'Timber' = 4, 'StoneBr' = 5, 'NoRidge' = 5,   
+              'NridgHt' = 5)  
+Ames['NeighborhoodBin'] = as.numeric(nbrh.map[Ames$Neighborhood])
+
+#Binning a MSSubClass
+mscls.map = c('180' = 1, '30' = 1, '45' = 1, '190' = 2, '50' = 2, '90' = 2, '85' = 2, '40' = 2, '160' = 2,
+              '70' = 3, '20' = 3, '75' = 3, '80' = 3, '120' = 4, '60' = 4)
+Ames['MSSubClassBin'] = as.numeric(mscls.map[Ames$MSSubClass])
+ ```
+
 ## 5. Data Pre-Processing
   ### 5.1 Removing highly correlated variables
+  
   ### 5.2 Removing outliers
+  
   ### 5.3 Skewness and kurtosis of predictors
   ### 5.4 Standardize
   ### 5.5 Principal component analysis
