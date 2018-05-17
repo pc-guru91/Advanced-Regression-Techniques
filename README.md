@@ -319,7 +319,7 @@ Ames$Remodelled = as.integer(Ames$Remodelled)
  ### 4.2 Feature engineering on categoric data
  We can try binning approach with Neighborhood and MSSubClass by subdividing them into equal intervals of SalePrice. 
  ```
- #Binning a Neighborhood
+ #Binning Neighborhood
  nbrh.map <- c('MeadowV' = 0, 'IDOTRR' = 1, 'BrDale' = 1, 'OldTown' = 1, 'Edwards' = 1,   
               'BrkSide' = 1, 'Sawyer' =2, 'Blueste' = 2, 'SWISU' = 2, 'NAmes' = 2, 'NPkVill' = 2, 'Mitchel' = 2,  
               'SawyerW' = 3, 'Gilbert' = 3, 'NWAmes' = 3, 'Blmngtn' = 3, 'CollgCr' = 3, 'ClearCr' = 3,   
@@ -327,7 +327,7 @@ Ames$Remodelled = as.integer(Ames$Remodelled)
               'NridgHt' = 5)  
 Ames['NeighborhoodBin'] = as.numeric(nbrh.map[Ames$Neighborhood])
 
-#Binning a MSSubClass
+#Binning MSSubClass
 mscls.map = c('180' = 1, '30' = 1, '45' = 1, '190' = 2, '50' = 2, '90' = 2, '85' = 2, '40' = 2, '160' = 2,
               '70' = 3, '20' = 3, '75' = 3, '80' = 3, '120' = 4, '60' = 4)
 Ames['MSSubClassBin'] = as.numeric(mscls.map[Ames$MSSubClass])
@@ -335,23 +335,163 @@ Ames['MSSubClassBin'] = as.numeric(mscls.map[Ames$MSSubClass])
 
 ## 5. Data Pre-Processing
   ### 5.1 Removing highly correlated variables
-  
-  ### 5.2 Removing outliers
-  
-  ### 5.3 Skewness and kurtosis of predictors
-  ### 5.4 Standardize
-  ### 5.5 Principal component analysis
-  ### 5.6 One-hot encoding
-  ### 5.7 Dropping dummy variables w/zero variance
-  ### 5.8 Normalizing the target variable
+Multicollinearity is one of the issues in producing poor results for applied machine learning. The correlation will be set at cutoff = 0.75 to decide at which highly correlated features to remove. 
+  ```
+numericVar = which(sapply(Ames.train, is.numeric))  
+Ames_numVar = Ames.train[, numericVar]
+Cor_numVar = cor(Ames_numVar, use = "pairwise.complete.obs")  
+Cor_numVar[is.na(Cor_numVar)] = 0
+findCorrelation(Cor_numVar, cutoff = 0.75)
+------------------------------------------------
+[1] "GarageCars" "YearBuilt" "TotalBsmtSF" "GrLivArea" "FireplaceQu" "GarageCond" "PavedDrive" "PoolQC"     
+[9] "PoolArea"
+  ```
+Before we remove the features it's important to refer back to the correlation matrix and random forest variable importance. We will remove one of two highly correlated features that has slightly lower correlations with a response variable. The final list would be:
+
+[1] "GarageArea" "YearRemodAdd" "TotalBsmtSF" "FireplaceQu" "GarageCond" "PavedDrive" "Pool" "PoolArea" "TotRmsAbvGrd"  
  
+  ### 5.2 Removing outliers
+  We found four extreme outliers in GrLivArea and MSSubClass. Although removing outliers can be dangerous, we will remove them because they skew the data and do not follow the overall trend of the data. 
+  ```
+  Ames = Ames[-c(524,692,1183,1299), ]
+  ```
+  ### 5.3 Skewness and kurtosis of predictors
+  One of the important assumptions for regression models is normality. In order to preserve this assumption, a very common method of log transformation will be applied to all continuous predictors.  
+  ```
+  numVar = which(sapply(Ames, is.numeric))
+  Ames_numVar = Ames[, numVar]
+  true_numVar = c('LotFrontage', 'LotArea', 'YearBuilt','MasVnrArea','BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF','X1stFlrSF',                                 'LowQualFinSF', 'X2ndFlrSF','GrLivArea', 'GarageYrBlt','WoodDeckSF', 'OpenPorchSF',                                                     'EnclosedPorch','X3SsnPorch','ScreenPorch', 'MiscVal', 'TotalArea','TotalOutdoorSF')
+  true_numVar = Ames_numVar[, true_numVar]
+ 
+ for(i in 1:ncol(true_numVar)){
+  if(abs(skew(true_numVar [, i]))>0.7){
+    true_numVar[, i] = log(true_numVar[, i]+1)
+  }
+}
+  ```
+  ### 5.4 Standardize
+  Both training and testing sets need to be scaled and centered to have mean = 0 and standard deviation of 1. 
+  ```
+**#Standardize training set**
+scale_numtrain = Ames_numVar[1:1456, colnames(true_numVar)]
+scale.train = preProcess(scale_numtrain, method = c("center", "scale"))
+scale.train = predict(scale.train, scale_numtrain)
+**#Standardize testing set**
+scale_numtest = Ames_numVar[1457:nrow(Ames_numVar), colnames(true_numVar)]
+scale.test = preProcess(scale_numtest, method = c("center", "scale"))
+scale.test = predict(scale.test, scale_numtest)
+
+  ```
+  ### 5.5 Principal component analysis
+This is one of the algorithms that can reduce dimensions but still preserve variance within the data. Generally, PCA calculates linear combinations of predictors 
+```
+pr.out = prcomp(scale.train, scale. = F)    
+summary(pr.out)                             #Reduced 4 dimensions and still containing 100% of information
+pr.data = pr.out$x
+
+pr.train.data = data.frame(pr.data, SalePrice = train$SalePrice)
+pr.train.data = pr.train.data[, 1:19]
+pr.test.data = predict(pr.out, newdata = scale.test)
+pr.test.data = data.frame(pr.test.data, SalePrice = final.test$SalePrice)
+pr.test.data = pr.test.data[, 1:19]
+```
+Unfortunately, the PCA did not improve result for this dataset. We will proceed without using it. 
+
+  ### 5.6 One-hot encoding
+The regression models require all variables to be numeric. Therefore, we need to convert all categorical variables by performing one-hot encoding. 
+ ```
+Ames_catVar = Ames[, -numVar]
+dfdummies = as.data.frame(model.matrix(~.-1, Ames_catVar))
+dummies.train = dfdummies[1:1456, ]
+dummies.test = dfdummies[1457:nrow(dfdummies), ]
+ ```
+  ### 5.7 Dropping dummy variables w/zero variance
+We will drop dummy variables with zero variance because these features have zero observations and convey no information of the data. We can consider dropping dummy variables with near zero variance but it would cause too much information to be lost. 
+
+```
+nzv.train = nearZeroVar(final.train, saveMetrics = TRUE)
+drop.cols1 = rownames(nzv.train)[nzv.train$zeroVar == TRUE]
+```
+
+  ### 5.8 Normalizing the target variable
+This is the final step before we can implement the models. Just as the predictors, the target variable should be normalized to follow the assumption of regression models. We recommend using simple transformation method for this can benefit the interpretability of a model. 
+```
+log(final.train$SalePrice) %>% skew() # 0.0653 meets the -0.8 to 0.8 threshold
+log(final.train$SalePrice) %>% kurtosi() #0.655 meets the -3.0 to 3.0 threshold
+final.train$SalePrice = log(final.train$SalePrice) 
+```
+Now that we have log transformed the response variable it looks it's apprixmating normal distribution, so we will proceed. 
+
+![normality of response var](https://user-images.githubusercontent.com/38479244/40151299-eda2ab02-5933-11e8-9c69-5c0240a56890.png)
+
 ## 6. Modeling
-  ### 6.1 Lasso regression 
+  ### 6.1 Lasso regression
+ 
+ ```
+#a: Set controls for Lasso
+set.seed(102091)
+control = trainControl(method = "repeatedcv", number = 10, repeats = 2)
+lasso_grid = expand.grid(alpha = 1, lambda = seq(0.001, 0.1, by = 0.0005))
+
+#b: Fit Lasso
+lasso.fit = train(SalePrice~., data = final.train, method = 'glmnet', trControl = control,
+                  tuneGrid = lasso_grid)
+#c: Predict Lasso
+pred.lasso = predict(lasso.fit, final.test)
+prediction.lasso = data.frame(Id = seq(1461, 2919, 1), SalePrice = exp(pred.lasso))
+  ```
+**(Note that the predicted values need to be exp( ) to bring back the original values because log transformation was performed on the target variable.)**
+
   ### 6.2 Ridge regression
+  ```
+set.seed(102091)
+ridge_grid = expand.grid(alpha = 0, lambda = seq(0.001, 0.1, by = 0.0005))
+#a: Fit Ridge
+ridge.fit = train(SalePrice~., data = final.train, method = 'glmnet', trControl = control,
+                   tuneGrid = ridge_grid)
+#b: Predict Ridge
+pred.ridge = predict(ridge.fit, final.test)
+prediction.ridge = data.frame(Id = seq(1461, 2919, 1), SalePrice = exp(pred.ridge))
+  ```
   ### 6.3 Elastic net
+```
+set.seed(102091)
+elastic_grid = expand.grid(alpha = 0.5, lambda = seq(0.001, 0.1, by = 0.0005))
+#a: Fit Elastic Net
+elastic.fit = train(SalePrice~., data = final.train, method = 'glmnet', trControl = control,
+                   tuneGrid = elastic_grid)
+#b: Predict Elastic Net
+pred.elastic = predict(elastic.fit, final.test)
+prediction.elastic = data.frame(Id = seq(1461, 2919, 1), SalePrice = exp(pred.elastic))
+```
   ### 6.4 XGBoost
+```
+#a: Set controls for XGBoost----------------------------------------------------------------------
+set.seed(102091)
+cv.control = trainControl(method = "repeatedcv", number = 10, repeats = 2, allowParallel = TRUE)
+XGBoost_grid = expand.grid(gamma = 0, nrounds = 500, max_depth=seq(2,8,1), eta = c(0.1, 0.05, 0.01), colsample_bytree=1, 
+                           subsample=1, min_child_weight=c(1,2,3,4,5))
+xgb_grid_opt = expand.grid(objective = 'reg:linear', booster = 'gbtree', gamma = 0, nrounds = 500, max_depth=3, eta = 0.05, 
+                           colsample_bytree=1, subsample=1, min_child_weight=4)
+#b: Tune & Fit XGBoost
+XGBoost.fit = train(SalePrice~., data = final.train, method = 'xgbTree', trControl = cv.control,
+                    tuneGrid = XGBoost_grid, metric = "RMSE")
+#c: Predict XGBoost
+pred.xgb = predict(XGBoost.fit, final.test)
+prediction.xgb = data.frame(Id = seq(1461, 2919, 1), SalePrice = exp(pred.xgb))
+
+```
   ### 6.5 Simple average
+```
+pred.s_average = (prediction.elastic$SalePrice+prediction.ridge$SalePrice+prediction.lasso$SalePrice)/3
+predictions.s_average = data.frame(Id = seq(1461, 2919, 1), SalePrice = pred.s_average)
+
+```
   ### 6.6 Weighted average
+```
+pred.w_average = (prediction.elastic$SalePrice+prediction.ridge$SalePrice+prediction.lasso$SalePrice)/3
+predictions.w_average = data.frame(Id = seq(1461, 2919, 1), SalePrice = pred.w_average)
+```
   ### 6.7 Ensemble
   ### 6.8 Stacking
 
