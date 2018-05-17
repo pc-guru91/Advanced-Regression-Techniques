@@ -181,30 +181,32 @@ xgb.ggplot.importance(importance_matrix = features[1:20], rel_to_first = TRUE)
 
 
 # Weighted Average Ensemble -------------------------------------------------------
+set.seed(102091)
 Gridlasso = expand.grid(.alpha = 1, .lambda = seq(0.001,0.1,by = 0.001))
 Gridridge = expand.grid(.alpha = 0, .lambda = seq(0.001,0.1,by = 0.001))
 Gridelastic = expand.grid(.alpha = 0.5, .lambda = seq(0.001,0.1,by = 0.001))
-trcontrol = trainControl(method = "cv", number = 10, repeats = 2, savePredictions = 'final')
+trcontrol = trainControl(method = "cv", number = 10, savePredictions = 'final', allowParallel = TRUE)
 
-modelList = caretList(x=final.train, y=final.train$SalePrice, trControl=trcontrol, metric="RMSE", tuneList = list(
-  xgbTree = caretModelSpec(method = "xgbTree", tuneGrid = XGBoost_grid, nthread = 8),
+modelList2 = caretList(SalePrice~., data = final.train, trControl=trcontrol, metric="RMSE", tuneList = list(
   glmnet = caretModelSpec(method = "glmnet", tuneGrid = Gridlasso),
   glmnet = caretModelSpec(method = "glmnet", tuneGrid = Gridridge),
   glmnet = caretModelSpec(method = "glmnet", tuneGrid = Gridelastic)
 ))
-set.seed(102091)
+
 #a: Fit Ensemble
-Ensemble = caretEnsemble(modelList, metric = "RMSE", trControl = control)
+Ensemble = caretEnsemble(modelList2, metric = "RMSE", trControl = control)
 #a: Predict Ensemble
 pred.ensemble = predict(Ensemble, final.test)
 prediction.ensemble = data.frame(Id = seq(1461, 2919, 1), SalePrice = exp(pred.ensemble))
+pratice = write.csv(prediction.ensemble, file = 'prediction.ensemble.csv', row.names = FALSE)
 
 
 
 # Simple Average of all models ----------------------------------------------------------
-pred.s_average = (prediction.elastic$SalePrice+prediction.ridge$SalePrice+prediction.lasso$SalePrice)/3
-predictions.s_average = data.frame(Id = seq(1461, 2919, 1), SalePrice = pred.s_average)
-pratice = write.csv(predictions.s_average, file = 'prediction.s_average.csv', row.names = FALSE)
+pred.s_average = (prediction.elastic$SalePrice+prediction.ridge$SalePrice+prediction.lasso$SalePrice+
+                    prediction.xgb+prediction.ensemble)/5
+predictions.s_average = data.frame(Id=seq(1461, 2919, 1), SalePrice=pred.s_average)
+pratice = write.csv(predictions.s_average, file = 'predictions.s_average.csv', row.names = FALSE)
 
 
 
@@ -213,6 +215,13 @@ pred.w_average = (prediction.elastic$SalePrice+prediction.ridge$SalePrice+predic
 predictions.w_average = data.frame(Id = seq(1461, 2919, 1), SalePrice = pred.w_average)
 
 
-# Stacking ----------------------------------------------------------------
-elastic.fit$pred
+
+# Evaluation --------------------------------------------------------------
+min(lasso.fit$results$RMSE)
+min(ridge.fit$results$RMSE)
+min(elastic.fit$result$RMSE)
+min(XGBoost.fit$results$RMSE)
+
+
+
 
