@@ -493,16 +493,36 @@ pred.w_average = (prediction.elastic$SalePrice+prediction.ridge$SalePrice+predic
 predictions.w_average = data.frame(Id = seq(1461, 2919, 1), SalePrice = pred.w_average)
 ```
   ### 6.7 Ensemble
+```
+# Weighted Average Ensemble -------------------------------------------------------
+#a: Set controls
+set.seed(102091)
+Gridlasso = expand.grid(.alpha = 1, .lambda = seq(0.001,0.1,by = 0.001))
+Gridridge = expand.grid(.alpha = 0, .lambda = seq(0.001,0.1,by = 0.001))
+Gridelastic = expand.grid(.alpha = 0.5, .lambda = seq(0.001,0.1,by = 0.001))
+trcontrol = trainControl(method = "cv", number = 10, savePredictions = 'final', allowParallel = TRUE)
+
+modelList2 = caretList(SalePrice~., data = final.train, trControl=trcontrol, metric="RMSE", tuneList = list(
+  glmnet = caretModelSpec(method = "glmnet", tuneGrid = Gridlasso),
+  glmnet = caretModelSpec(method = "glmnet", tuneGrid = Gridridge),
+  glmnet = caretModelSpec(method = "glmnet", tuneGrid = Gridelastic)
+))
+
+#b: Fit Ensemble
+Ensemble = caretEnsemble(modelList2, metric = "RMSE", trControl = control)
+
+#c: Predict Ensemble
+pred.ensemble = predict(Ensemble, final.test)
+prediction.ensemble = data.frame(Id = seq(1461, 2919, 1), SalePrice = exp(pred.ensemble))
+```
   ### 6.8 Stacking
 
-## 7. Evaluation
-  ### 7.1 Choosing the best model
-  ### 7.2 Submitting work
- 
+## 7. Submitting Work
+  Usually, ensemble methods would produce the highest accurary. 
   ```
-  write.csv(..., file = '...csv', row.names = FALSE)
+  write.csv(..., file = '....csv', row.names = FALSE)
   ```
-  To view the full codes on this project, click [here](https://github.com/pc-guru91/AmesHousing/blob/master/Ames%20Analysis.R) and [here](https://github.com/pc-guru91/AmesHousing/blob/master/Ames%20Prediction.R)
+  To view the full codes on this project, click [Part 1](https://github.com/pc-guru91/AmesHousing/blob/master/Ames%20Analysis.R) and [Part 2](https://github.com/pc-guru91/AmesHousing/blob/master/Ames%20Prediction.R)
 
- Good luck on your next data science competition! :v:
+ **Good luck on your next data science competition!** :v:
 
