@@ -515,7 +515,6 @@ Ensemble = caretEnsemble(modelList2, metric = "RMSE", trControl = control)
 pred.ensemble = predict(Ensemble, final.test)
 prediction.ensemble = data.frame(Id = seq(1461, 2919, 1), SalePrice = exp(pred.ensemble))
 ```
-  ### 6.8 Stacking
 
 ## 7. Submitting Work
   Usually, ensemble methods would produce the highest accurary. 
