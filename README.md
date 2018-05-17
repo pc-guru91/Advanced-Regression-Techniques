@@ -327,10 +327,6 @@ Ames$Remodelled = as.integer(Ames$Remodelled)
               'NridgHt' = 5)  
 Ames['NeighborhoodBin'] = as.numeric(nbrh.map[Ames$Neighborhood])
 
-#Binning MSSubClass
-mscls.map = c('180' = 1, '30' = 1, '45' = 1, '190' = 2, '50' = 2, '90' = 2, '85' = 2, '40' = 2, '160' = 2,
-              '70' = 3, '20' = 3, '75' = 3, '80' = 3, '120' = 4, '60' = 4)
-Ames['MSSubClassBin'] = as.numeric(mscls.map[Ames$MSSubClass])
  ```
 
 ## 5. Data Pre-Processing
