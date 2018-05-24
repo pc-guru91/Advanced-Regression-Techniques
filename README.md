@@ -118,7 +118,7 @@ Ames$Electrical[1380] = names(sort(-table(Ames$Electrical[Ames$Heating %in% 'Gas
 
 ![quality plots](https://user-images.githubusercontent.com/38479244/40100687-b6bf3230-5899-11e8-8606-e725435bfea3.png)
 
-**According to the plots above, we can conclude that there's a natural ordering in features relative to median of the target variable ('Ex'< 'Gd' < 'Ta' < 'Fa' < 'Po').**  
+**According to the plots above, we can conclude that there's a natural ordering in features relative to median of the target variable ('Ex'> 'Gd' > 'Ta' > 'Fa' > 'Po').**  
   ```
   Quality = c('Ex'=5, 'Gd'=4, 'TA'=3, 'Fa'=2, 'Po'=1, 'None'=0)  
   Ames$FireplaceQu = as.integer(revalue(Ames$FireplaceQu, Quality))
@@ -228,7 +228,7 @@ Ames$SaleCondition = as.factor(Ames$SaleCondition)
 ![randomforest importance](https://user-images.githubusercontent.com/38479244/40110140-162616e8-58b4-11e8-9ab6-f5d0c18878db.png)
 
   ### 3.3 Key Features
-  Based on correlation matrix and random forest variance importance, we can narrow down all 79 variables to 5 main variables that affect   the SalePrice the most:
+  Based on correlation matrix and random forest variance importance, we can narrow down all 79 variables to 5 main variables that affect   the SalePrice the most (The list is ordered in no specific order of importance):
    
    1. OverallQual
    2. GrLivArea
@@ -436,7 +436,7 @@ lasso.fit = train(SalePrice~., data = final.train, method = 'glmnet', trControl 
 pred.lasso = predict(lasso.fit, final.test)
 prediction.lasso = data.frame(Id = seq(1461, 2919, 1), SalePrice = exp(pred.lasso))
   ```
-**(Note that the predicted values need to be exp( ) to bring back the original values because log transformation was performed on the target variable.)**
+**(Note that the predicted values need to be exp( ) to bring back to the original values because log transformation was performed on the target variable.)**
 
   ### 6.2 Ridge regression
   ```
@@ -460,6 +460,14 @@ elastic.fit = train(SalePrice~., data = final.train, method = 'glmnet', trContro
 pred.elastic = predict(elastic.fit, final.test)
 prediction.elastic = data.frame(Id = seq(1461, 2919, 1), SalePrice = exp(pred.elastic))
 ```
+
+Below is the summary of variable importance resulted from three models: Lasso, Ridge, and Elastic. The distribution of lasso model of feature variance is noticeably different from ridge model because lasso is a feature selection model, which reduces irrelevant or highly correlated features to 0. 
+
+Another interesting observation to pinpoint is  top 3 features in all models are related to either functionality of a house or exterior types such as body type and roof style. We can draw insightful conclusion that the overall quality of a house heavily depends on these two. 
+
+![rplot01](https://user-images.githubusercontent.com/38479244/40459517-ac1be0f8-5eb6-11e8-8097-f160cf7160df.png)
+
+
   ### 6.4 XGBoost
 ```
 #a: Set controls for XGBoost----------------------------------------------------------------------
@@ -513,11 +521,11 @@ prediction.ensemble = data.frame(Id = seq(1461, 2919, 1), SalePrice = exp(pred.e
 ```
 
 ## 7. Submitting Work
-  Usually, ensemble methods would produce the highest accurary. 
+  
   ```
   write.csv(..., file = '....csv', row.names = FALSE)
   ```
-  To view the full codes on this project, click [Part 1](https://github.com/pc-guru91/AmesHousing/blob/master/Ames%20Analysis.R) and [Part 2](https://github.com/pc-guru91/AmesHousing/blob/master/Ames%20Prediction.R)
+  To view the full codes on this project, click [Part 1](https://github.com/pc-guru91/AmesHousing/blob/master/Ames%20Analysis.R) and [Part 2](https://github.com/pc-guru91/AmesHousing/blob/master/Ames%20Prediction.R). **Good luck on your next data science competition!** :v:
 
- **Good luck on your next data science competition!** :v:
+ 
 
