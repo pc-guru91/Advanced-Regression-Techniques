@@ -461,9 +461,9 @@ pred.elastic = predict(elastic.fit, final.test)
 prediction.elastic = data.frame(Id = seq(1461, 2919, 1), SalePrice = exp(pred.elastic))
 ```
 
-Below is the summary of variable importance resulted from three models: Lasso, Ridge, and Elastic. The distribution of lasso model of feature variance is noticeably different from ridge model because lasso is a feature selection model, which reduces irrelevant or highly correlated features to 0. 
+Below are the summaries of variable importance resulted from three models: Lasso, Ridge, and Elastic. The distribution of feature variance for lasso is noticeably different from ridge model because lasso is a feature selection model, which reduces irrelevant or highly correlated features to 0. 
 
-Another interesting observation to pinpoint is  top 3 features in all models are related to either functionality of a house or exterior types such as body type and roof style. We can draw insightful conclusion that the overall quality of a house heavily depends on these two. 
+Another interesting observation to pinpoint is that top 3 features in all models are related to either functionality of a house or exterior types such as body type and roof style. We can draw insightful conclusion that the overall quality of a house heavily depends on these two. 
 
 ![rplot01](https://user-images.githubusercontent.com/38479244/40459517-ac1be0f8-5eb6-11e8-8097-f160cf7160df.png)
 
@@ -520,7 +520,20 @@ pred.ensemble = predict(Ensemble, final.test)
 prediction.ensemble = data.frame(Id = seq(1461, 2919, 1), SalePrice = exp(pred.ensemble))
 ```
 
-## 7. Submitting Work
+
+## 7. Actionable Insight :exclamation:
+Based on the data provided specifically for this project, not considering the nature of cyclicality of the residential real estate industry, we can conclude that the following main factors affect housing prices the most:
+
+- What is the roof type of a house?
+- What is the construction type of a house?
+- Which neighborhood is a house located in?
+- Is there a damage to the house? If so, how damaged is it?
+- Is it newly built?
+
+If you are looking to buy a home in Iowa, you should consider investing on a house with these factors. 
+
+
+## 8. Submitting Work
   
   ```
   write.csv(..., file = '....csv', row.names = FALSE)
