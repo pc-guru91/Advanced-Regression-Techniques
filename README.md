@@ -26,7 +26,7 @@ The dataset (both training and testing) is provided by [Kaggle](https://www.kagg
 
 ### 1.2 Load the dataset
 Since both test and train sets contain missing values, let's combine them into a single data frame called Ames.
-```
+``` R
 test = read.csv("test.csv", stringsAsFactors = FALSE)  
 train = read.csv('train.csv', stringsAsFactors = FALSE)  
 Ames = rbind(within(train, rm('Id', 'SalePrice')), within(test, rm('Id')))
@@ -35,7 +35,7 @@ Ames = rbind(within(train, rm('Id', 'SalePrice')), within(test, rm('Id')))
 ## 2. Data Cleansing
   ### 2.1 Imputing missing values
 Imputing N/A may be a bit tricky and time consuming. First, let's discover columns with missing data. We see that there are total of 34 columns with missing data.
-  ```
+  ``` R
   NAcol = which(colSums(is.na(Ames)) > 0)  
   sort(colSums(sapply(Ames[NAcol], is.na)), decreasing = TRUE)
   ```
@@ -43,7 +43,7 @@ Imputing N/A may be a bit tricky and time consuming. First, let's discover colum
 
 
 #### Below are columns with missing data that can be replaced with either "None" or "0"
-```
+``` R
 Ames$PoolQC[is.na(Ames$PoolQC)] = "None"  
 Ames$MiscFeature[is.na(Ames$MiscFeature)] = "None"
 Ames$Alley[is.na(Ames$Alley)]= "None" 
@@ -72,7 +72,7 @@ There are multiple ways to impute this type of missing values, let's just define
 ![rplot](https://user-images.githubusercontent.com/38479244/40098133-c016873a-588e-11e8-917c-132d67d84995.png)
 
 The former approach will be used because it's evident that lot frontage varies by the type of neighborhood a house is located. However, fitting a decision tree and predicting for missing values can be a reasonable approach as well.  
-```
+``` R
 for (i in 1:nrow(Ames)){  
   if(is.na(Ames$LotFrontage[i])){  
     Ames$LotFrontage[i] = as.integer(median(Ames$LotFrontage[Ames$Neighborhood==Ames$Neighborhood[i]], 
@@ -84,13 +84,13 @@ for (i in 1:nrow(Ames)){
 #### GarageYrBlt
 
 Based on the data, we find that GarageYrBlt, most of the time, matches with the YearBuilt. Intuitively, this makes sense because when a house is built, a garage is built as well. Therefore, we will replace the missing values with the YearBuilt values. 
-```
+``` R
 Ames$GarageYrBlt[is.na(Ames$GarageYrBlt)] = Ames$YearBuilt[is.na(Ames$GarageYrBlt)]
 ```
 
 #### Special Considerations
 
-```
+``` R
 Ames$MasVnrType[is.na(Ames$MasVnrArea)] = "None"
 Ames$GarageYrBlt[2593] = 2007  
 Ames$GarageYrBlt[2512] = 1923 
@@ -119,7 +119,7 @@ Ames$Electrical[1380] = names(sort(-table(Ames$Electrical[Ames$Heating %in% 'Gas
 ![quality plots](https://user-images.githubusercontent.com/38479244/40100687-b6bf3230-5899-11e8-8606-e725435bfea3.png)
 
 **According to the plots above, we can conclude that there's a natural ordering in features relative to median of the target variable ('Ex'> 'Gd' > 'Ta' > 'Fa' > 'Po').**  
-  ```
+  ``` R
   Quality = c('Ex'=5, 'Gd'=4, 'TA'=3, 'Fa'=2, 'Po'=1, 'None'=0)  
   Ames$FireplaceQu = as.integer(revalue(Ames$FireplaceQu, Quality))
   ...
@@ -128,14 +128,14 @@ Ames$Electrical[1380] = names(sort(-table(Ames$Electrical[Ames$Heating %in% 'Gas
   ### 2.3 Encoding categorical variables
 #### Hypothesis Testing
 We will perform post hoc analysis using both ANOVA factor and TukeyHSD to validate the ordinality of features in question. To give a couple of examples of how this works, refer to the descriptions below:
- ```
+ ``` R
  fit = aov(SalePrice ~ Alley)
  TukeyHSD(fit)
  ----------------------------------------------------
                diff      lwr      upr p adj
 Pave-Grvl 45781.51 30527.29 61035.72     0
  ```
- ```
+ ``` R
  fit = aov(SalePrice ~ GarageFinish)
  TukeyHSD(fit)
  ----------------------------------------------------
@@ -145,7 +145,7 @@ Unf-Fin -98283.00 -108948.85 -87617.14     0
 Unf-RFn -59912.45  -69985.40 -49839.49     0
  ```
 Notice that the adjusted p-value is 0 indicating that significant means exist between different groups of a feature. Therefore, we will acknowledge that ordinality exists and assign label encoding. 
-```
+``` R
 Alley = c('None'=0, 'Grvl'=1, 'Pave'=2)
 Ames$Alley = as.integer(revalue(Ames$Alley, Alley)) 
 
@@ -169,7 +169,7 @@ Ames$GarageFinish = as.integer(revalue(Ames$GarageFinish, Garage))
  ### 2.4 Factorizing numeric variables
  #### MSSubClass
  The MSSubClass should be factorized. Otherwise, MSSubClass groups can mislead MSSubClass = 190 to have the highest weight and MSSubClass = 20 to have the lowest weight in predicting for the SalePrice. 
- ```
+ ``` R
     MSSubClass median count
         <int>  <dbl>  <int>
  1        180  88500    10
@@ -196,13 +196,13 @@ Ames$MSSubClass=as.factor(Ames$MSSubClass)
  
 ![mo yr sold](https://user-images.githubusercontent.com/38479244/40102807-51fe7fde-58a0-11e8-9de3-516723372641.png)
 
-```
+``` R
 Ames$MoSold = as.factor(Ames$MoSold)
 Ames$YrSold = as.factor(Ames$YrSold)
 ```  
 ### 2.5 Factorizing the rest of categorical variables
 Now that we've imputed all missing values, we will begin to factorize all of the rest of categorical variables. Here's a list:
-```
+``` R
 Ames$MiscFeature = as.factor(Ames$MiscFeature)        |     Ames$Functional = as.factor(Ames$Functional)
 Ames$Fence = as.factor(Ames$Fence)                    |     Ames$Electrical = as.factor(Ames$Electrical)
 Ames$GarageType = as.factor(Ames$GarageType)          |     Ames$LandSlope = as.factor(Ames$LandSlope)
@@ -283,7 +283,7 @@ This section is critical in optimizing predictive models. We will create stronge
 
  ### 4.1 Feature engineering on numeric data
 So far, we covered that OverallQual, GrLivArea, and YearBuilt have the one of the highest correlations with SalePrice. Since both living space and quality of a house are important we will look more closely on these components in order to create a new feature that would explain more about the data. 
- ```
+ ``` R
 # TotalBsmtSF = BsmtFinSF + BsmtUnfSF
 # GrLivArea   = 1stFlrSF + 2ndFlrSF + LowQualFinSF 
 # TotalArea = TotalBsmtSF + GrLivArea
@@ -302,7 +302,7 @@ Ames$TotalBaths = as.integer(Ames$TotalBaths)
 
 ![house new](https://user-images.githubusercontent.com/38479244/40149272-a4f0a10e-5927-11e8-91d6-87e6da1209cf.png)
 
-```
+``` R
 #Is it a new house?
 Ames$HouseNew = ifelse(Ames$YrSold == Ames$YearBuilt, 1, 0)
 Ames$HouseNew = as.integer(Ames$HouseNew)
@@ -310,7 +310,7 @@ Ames$HouseNew = as.integer(Ames$HouseNew)
 
 ![remodelled](https://user-images.githubusercontent.com/38479244/40149274-a6447120-5927-11e8-9adc-a3ba7928c30c.png)
 
-```
+``` R
 #Is it remodelled?
 Ames$Remodelled = ifelse(Ames$YearRemodAdd != Ames$YearBuilt, 0, 1)
 Ames$Remodelled = as.integer(Ames$Remodelled)
@@ -318,7 +318,7 @@ Ames$Remodelled = as.integer(Ames$Remodelled)
 
  ### 4.2 Feature engineering on categoric data
  We can try binning approach with Neighborhood and MSSubClass by subdividing them into equal intervals of SalePrice. 
- ```
+ ``` R
  #Binning Neighborhood
  nbrh.map <- c('MeadowV' = 0, 'IDOTRR' = 1, 'BrDale' = 1, 'OldTown' = 1, 'Edwards' = 1,   
               'BrkSide' = 1, 'Sawyer' =2, 'Blueste' = 2, 'SWISU' = 2, 'NAmes' = 2, 'NPkVill' = 2, 'Mitchel' = 2,  
@@ -332,7 +332,7 @@ Ames['NeighborhoodBin'] = as.numeric(nbrh.map[Ames$Neighborhood])
 ## 5. Data Pre-Processing
   ### 5.1 Removing highly correlated variables
 Multicollinearity is one of the issues in producing poor results for applied machine learning. The correlation will be set at cutoff = 0.75 to decide at which highly correlated features to remove. 
-  ```
+  ``` R
 numericVar = which(sapply(Ames.train, is.numeric))  
 Ames_numVar = Ames.train[, numericVar]
 Cor_numVar = cor(Ames_numVar, use = "pairwise.complete.obs")  
@@ -348,12 +348,12 @@ Before we remove the features it's important to refer back to the correlation ma
  
   ### 5.2 Removing outliers
   We found four extreme outliers in GrLivArea and MSSubClass. Although removing outliers can be dangerous, we will remove them because they skew the data and do not follow the overall trend of the data. 
-  ```
+  ``` R
   Ames = Ames[-c(524,692,1183,1299), ]
   ```
   ### 5.3 Skewness and kurtosis of predictors
   One of the important assumptions for regression models is normality. In order to preserve this assumption, a very common method of log transformation will be applied to all continuous predictors.  
-  ```
+  ``` R
   numVar = which(sapply(Ames, is.numeric))
   Ames_numVar = Ames[, numVar]
   true_numVar = c('LotFrontage', 'LotArea', 'YearBuilt','MasVnrArea','BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF','X1stFlrSF',                                 'LowQualFinSF', 'X2ndFlrSF','GrLivArea', 'GarageYrBlt','WoodDeckSF', 'OpenPorchSF',                                                     'EnclosedPorch','X3SsnPorch','ScreenPorch', 'MiscVal', 'TotalArea','TotalOutdoorSF')
@@ -367,7 +367,7 @@ Before we remove the features it's important to refer back to the correlation ma
   ```
   ### 5.4 Standardize
   Both training and testing sets need to be scaled and centered to have mean = 0 and standard deviation of 1. 
-  ```
+  ``` R
 **#Standardize training set**
 scale_numtrain = Ames_numVar[1:1456, colnames(true_numVar)]
 scale.train = preProcess(scale_numtrain, method = c("center", "scale"))
@@ -380,7 +380,7 @@ scale.test = predict(scale.test, scale_numtest)
   ```
   ### 5.5 Principal component analysis
 This is one of the algorithms that can reduce dimensions but still preserve variance within the data. Generally, PCA calculates linear combinations of predictors 
-```
+``` R
 pr.out = prcomp(scale.train, scale. = F)    
 summary(pr.out)                             #Reduced 4 dimensions and still containing 100% of information
 pr.data = pr.out$x
@@ -395,7 +395,7 @@ Unfortunately, the PCA did not improve result for this dataset. We will proceed 
 
   ### 5.6 One-hot encoding
 The regression models require all variables to be numeric. Therefore, we need to convert all categorical variables by performing one-hot encoding. 
- ```
+ ``` R
 Ames_catVar = Ames[, -numVar]
 dfdummies = as.data.frame(model.matrix(~.-1, Ames_catVar))
 dummies.train = dfdummies[1:1456, ]
@@ -404,14 +404,14 @@ dummies.test = dfdummies[1457:nrow(dfdummies), ]
   ### 5.7 Dropping dummy variables w/zero variance
 We will drop dummy variables with zero variance because these features have zero observations and convey no information of the data. We can consider dropping dummy variables with near zero variance but it would cause too much information to be lost. 
 
-```
+``` R
 nzv.train = nearZeroVar(final.train, saveMetrics = TRUE)
 drop.cols1 = rownames(nzv.train)[nzv.train$zeroVar == TRUE]
 ```
 
   ### 5.8 Normalizing the target variable
 This is the final step before we can implement the models. Just as the predictors, the target variable should be normalized to follow the assumption of regression models. We recommend using simple transformation method for this can benefit the interpretability of a model. 
-```
+``` R
 log(final.train$SalePrice) %>% skew() # 0.0653 meets the -0.8 to 0.8 threshold
 log(final.train$SalePrice) %>% kurtosi() #0.655 meets the -3.0 to 3.0 threshold
 final.train$SalePrice = log(final.train$SalePrice) 
@@ -423,7 +423,7 @@ Now that we have log transformed the response variable it looks it's apprixmatin
 ## 6. Modeling
   ### 6.1 Lasso regression
  
- ```
+ ``` R
 #a: Set controls for Lasso
 set.seed(102091)
 control = trainControl(method = "repeatedcv", number = 10, repeats = 2)
@@ -439,7 +439,7 @@ prediction.lasso = data.frame(Id = seq(1461, 2919, 1), SalePrice = exp(pred.lass
 **(Note that the predicted values need to be exp( ) to bring back to the original values because log transformation was performed on the target variable.)**
 
   ### 6.2 Ridge regression
-  ```
+  ``` R
 set.seed(102091)
 ridge_grid = expand.grid(alpha = 0, lambda = seq(0.001, 0.1, by = 0.0005))
 #a: Fit Ridge
@@ -450,7 +450,7 @@ pred.ridge = predict(ridge.fit, final.test)
 prediction.ridge = data.frame(Id = seq(1461, 2919, 1), SalePrice = exp(pred.ridge))
   ```
   ### 6.3 Elastic net
-```
+``` R
 set.seed(102091)
 elastic_grid = expand.grid(alpha = 0.5, lambda = seq(0.001, 0.1, by = 0.0005))
 #a: Fit Elastic Net
@@ -469,7 +469,7 @@ Another interesting observation to pinpoint is that top 3 features in all models
 
 
   ### 6.4 XGBoost
-```
+``` R
 #a: Set controls for XGBoost----------------------------------------------------------------------
 set.seed(102091)
 cv.control = trainControl(method = "repeatedcv", number = 10, repeats = 2, allowParallel = TRUE)
@@ -486,18 +486,18 @@ prediction.xgb = data.frame(Id = seq(1461, 2919, 1), SalePrice = exp(pred.xgb))
 
 ```
   ### 6.5 Simple average
-```
+``` R
 pred.s_average = (prediction.elastic$SalePrice+prediction.ridge$SalePrice+prediction.lasso$SalePrice)/3
 predictions.s_average = data.frame(Id = seq(1461, 2919, 1), SalePrice = pred.s_average)
 
 ```
   ### 6.6 Weighted average
-```
+``` R
 pred.w_average = (prediction.elastic$SalePrice+prediction.ridge$SalePrice+prediction.lasso$SalePrice)/3
 predictions.w_average = data.frame(Id = seq(1461, 2919, 1), SalePrice = pred.w_average)
 ```
   ### 6.7 Ensemble
-```
+``` R
 # Weighted Average Ensemble -------------------------------------------------------
 #a: Set controls
 set.seed(102091)
@@ -524,18 +524,18 @@ prediction.ensemble = data.frame(Id = seq(1461, 2919, 1), SalePrice = exp(pred.e
 ## 7. Actionable Insight :exclamation:
 Based on the data provided specifically for this project, not considering the nature of cyclicality of the residential real estate industry, we can conclude that the following main factors affect housing prices the most:
 
-- What is the roof type of a house?
-- What is the construction type of a house?
-- Which neighborhood is a house located in?
+- Roof type
+- Construction type
+- Neighborhood location
 - Is there a damage to the house? If so, how damaged is it?
-- Is it newly built?
+- New or not?
 
-If you are looking to buy a home in Iowa, you should consider investing on a house with these factors. 
+If you are looking to buy a home in Iowa, you should consider investing in a house with these factors. 
 
 
 ## 8. Submitting Work
   
-  ```
+  ``` R
   write.csv(..., file = '....csv', row.names = FALSE)
   ```
   To view the full codes on this project, click [Part 1](https://github.com/pc-guru91/AmesHousing/blob/master/Ames%20Analysis.R) and [Part 2](https://github.com/pc-guru91/AmesHousing/blob/master/Ames%20Prediction.R). **Good luck on your next data science competition!** :v:
